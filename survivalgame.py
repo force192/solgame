@@ -1,39 +1,106 @@
 import streamlit as st
 import random
+import time
 
-# Function to display stats
-def display_stats(player):
-    st.sidebar.subheader("Your Stats:")
-    st.sidebar.write(f"Health: {player['health']}")
-    st.sidebar.write(f"Attack: {player['attack']}")
-    st.sidebar.write(f"Defense: {player['defense']}")
-    st.sidebar.write(f"Experience: {player['experience']}")
+# Function to display stats for player and enemy
+def display_battlefield_stats(player, enemy, player_health_change, enemy_health_change):
+    stats_placeholder = st.empty()
+    with stats_placeholder.container():
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("### Your Stats")
+            st.write(f"**Health:** {player['health']} {player_health_change}")
+            st.write(f"**Attack:** {player['attack']}")
+            st.write(f"**Defense:** {player['defense']}")
+            st.write(f"**Experience:** {player['experience']}")
+        with col2:
+            st.markdown("### Enemy Stats")
+            st.write(f"**Name:** {enemy['name']}")
+            st.write(f"**Health:** {enemy['health']} {enemy_health_change}")
+            st.write(f"**Attack:** {enemy['attack']}")
+    return stats_placeholder
 
-# Fight logic
-def fight(player, enemy):
+# Function to format health change
+def format_health_change(change):
+    if change > 0:
+        return f"*(+{change})*"  # Green for healing
+    elif change < 0:
+        return f"*({change})*"  # Red for damage
+    else:
+        return ""
+
+# Fight logic with real-time updates and battle log
+def fight(player, enemy, use_skill):
     st.write(f"A wild **{enemy['name']}** appears!")
-    st.write(f"Enemy Stats - Health: {enemy['health']}, Attack: {enemy['attack']}")
+    battle_log_placeholder = st.empty()  # Placeholder for battle logs
+    clash_placeholder = st.empty()  # Placeholder for Light Saber Clash
+    logs = []  # Store the last 5 logs
 
+    player_health_change = ""
+    enemy_health_change = ""
+
+    stats_placeholder = display_battlefield_stats(player, enemy, player_health_change, enemy_health_change)
+
+    # Apply Light Saber Clash if selected
+    if use_skill and player['experience'] >= 50:
+        player['experience'] -= 50
+        extra_damage = random.randint(50, 100)
+        enemy['health'] -= extra_damage
+        clash_placeholder.markdown(
+            f"""
+            <div style="text-align:center; font-size:20px; color:gold; font-weight:bold;">
+                ⚡ **Light Saber Clash Activated!** ⚡<br>
+                <span style="font-size:24px; color:red;">Dealt {extra_damage} extra damage!</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        enemy_health_change = format_health_change(-extra_damage)
+        with stats_placeholder.container():
+            display_battlefield_stats(player, enemy, player_health_change, enemy_health_change)
+
+    # Animated fight sequence
     while player['health'] > 0 and enemy['health'] > 0:
-        # Player attacks first
+        # Player attacks
         damage_to_enemy = max(player['attack'] - enemy['attack'] // 2, 1)
         enemy['health'] -= damage_to_enemy
-        st.write(f"You attack the {enemy['name']} for **{damage_to_enemy}** damage. Enemy health: {enemy['health']}")
+        enemy_health_change = format_health_change(-damage_to_enemy)
+        logs.append(f"You attack the {enemy['name']} for {damage_to_enemy} damage.")
+        if len(logs) > 5:
+            logs.pop(0)
+        battle_log_placeholder.write("\n".join(logs))
+        with stats_placeholder.container():
+            display_battlefield_stats(player, enemy, player_health_change, enemy_health_change)
+        time.sleep(0.3)
 
         if enemy['health'] <= 0:
-            st.write(f"You defeated the **{enemy['name']}**!")
+            logs.append(f"🎉 **You defeated the {enemy['name']}!** 🎉")
+            if len(logs) > 5:
+                logs.pop(0)
+            battle_log_placeholder.markdown(
+                f"<div style='color:green; font-weight:bold;'>{'<br>'.join(logs)}</div>",
+                unsafe_allow_html=True,
+            )
             player['experience'] += enemy['experience']
             player['attack'] += 1
             player['health'] += 5  # Small health boost
+            player_health_change = format_health_change(5)
             return True
 
-        # Enemy attacks back
+        # Enemy attacks
         damage_to_player = max(enemy['attack'] - player['defense'], 1)
         player['health'] -= damage_to_player
-        st.write(f"The {enemy['name']} attacks you for **{damage_to_player}** damage. Your health: {player['health']}")
+        player_health_change = format_health_change(-damage_to_player)
+        logs.append(f"The {enemy['name']} attacks you for {damage_to_player} damage.")
+        if len(logs) > 5:
+            logs.pop(0)
+        battle_log_placeholder.write("\n".join(logs))
+        with stats_placeholder.container():
+            display_battlefield_stats(player, enemy, player_health_change, enemy_health_change)
+        time.sleep(0.3)
 
     if player['health'] <= 0:
-        st.error("You have been defeated! Game Over.")
+        st.error("❌ **You have been defeated! Game Over.** ❌")
         return False
 
     return True
@@ -57,7 +124,10 @@ def main():
         {'name': 'Orc', 'health': 50, 'attack': 8, 'experience': 20},
         {'name': 'Troll', 'health': 70, 'attack': 12, 'experience': 30},
         {'name': 'Dragon', 'health': 100, 'attack': 15, 'experience': 50},
-        {'name' : 'ninja', 'health': 1000, 'attack' : 10, 'experience': 100}
+        {'name': 'Ninja', 'health': 500, 'attack': 10, 'experience': 100},
+        {'name': 'Darth Vader', 'health': 500, 'attack': 15, 'experience': 200},
+        {'name': 'crab', 'health': 10, 'attack': 5, 'experience': 15},
+        {'name': 'Legendary Plant', 'health': 300, 'attack': 15, 'experience': 100}
     ]
 
     # Game state
@@ -71,14 +141,23 @@ def main():
         st.session_state.player = player  # Reset player stats
 
     if st.session_state.game_started:
-        display_stats(st.session_state.player)
-
         # Generate a random enemy
         enemy = random.choice(enemies)
 
+        # Ask if player wants to use Light Saber Clash
+        use_skill = False
+        if st.session_state.player['experience'] >= 50:
+            use_skill_input = st.radio(
+                "Do you want to use **Light Saber Clash** for an extra attack?",
+                options=["No", "Yes"],
+                index=0,
+                key="light_saber_clash"
+            )
+            use_skill = use_skill_input == "Yes"
+
         # Fight button
         if st.button("Fight Enemy"):
-            survived = fight(st.session_state.player, enemy)
+            survived = fight(st.session_state.player, enemy, use_skill)
             if not survived:
                 st.session_state.game_started = False
 
