@@ -144,7 +144,7 @@ def main():
 
     # Initial player stats
     player = {
-        'health': 2000,
+        'health': 1500,
         'attack': 15,
         'defense': 5,
         'experience': 0
