@@ -38,6 +38,15 @@ def format_health_change(change):
 # Fight logic with rewards included in logs
 def fight(player, enemy, use_skill):
     st.write(f"A wild **{enemy['name']}** appears!")
+    
+    # Display enemy image above battle logs
+    st.image(
+        enemy['image_url'], 
+        caption=f"{enemy['name']}",
+        use_container_width=False, 
+        width=150
+    )
+    
     battle_log_placeholder = st.empty()  # Placeholder for battle logs
     clash_placeholder = st.empty()  # Placeholder for Light Saber Clash
     logs = st.session_state.get("logs", [])  # Store the last 5 logs
@@ -136,7 +145,7 @@ def fight(player, enemy, use_skill):
 
     return True
 
-# Streamlit app
+# Main function
 def main():
     st.title("Survival Game by Sol")
     st.write("Survive as long as you can by defeating enemies and growing stronger!")
@@ -150,15 +159,16 @@ def main():
         'experience': 0
     }
 
+    # Updated enemies with images
     enemies = [
-        {'name': 'Goblin', 'health': 30, 'attack': 5, 'experience': 10},
-        {'name': 'Orc', 'health': 50, 'attack': 8, 'experience': 20},
-        {'name': 'Troll', 'health': 70, 'attack': 12, 'experience': 30},
-        {'name': 'Dragon', 'health': 100, 'attack': 15, 'experience': 50},
-        {'name': 'Ninja', 'health': 500, 'attack': 10, 'experience': 100},
-        {'name': 'Darth Vader', 'health': 500, 'attack': 15, 'experience': 200},
-        {'name': 'crab', 'health': 10, 'attack': 5, 'experience': 15},
-        {'name': 'Legendary Plant', 'health': 300, 'attack': 15, 'experience': 100}
+        {'name': 'Goblin', 'health': 30, 'attack': 5, 'experience': 10, 'image_url': 'https://tse2.mm.bing.net/th?id=OIP.n6NlIUEpvenN5ZETKIIw4AHaJQ&pid=Api'},
+        {'name': 'Orc', 'health': 50, 'attack': 8, 'experience': 20, 'image_url': 'https://tse2.mm.bing.net/th?id=OIP.4iR4bL_GuvunhC-zfq52KgHaHa&pid=Api'},
+        {'name': 'Troll', 'health': 70, 'attack': 12, 'experience': 30, 'image_url': 'https://tse1.mm.bing.net/th?id=OIP.20ph7o5KtyGIa_3jUp918wHaHa&pid=Api'},
+        {'name': 'Dragon', 'health': 100, 'attack': 15, 'experience': 50, 'image_url': 'https://tse3.mm.bing.net/th?id=OIP.YppokyEexgKtD10iVBBgNAHaHa&pid=Api'},
+        {'name': 'Ninja', 'health': 500, 'attack': 10, 'experience': 100, 'image_url': 'https://tse4.mm.bing.net/th?id=OIP.ODdetZUmSIKLt3IXA8YJeQHaHa&pid=Api'},
+        {'name': 'Darth Vader', 'health': 500, 'attack': 15, 'experience': 200, 'image_url': 'https://tse2.mm.bing.net/th?id=OIP.HY_Y0S8k_hYAeaMvEsxHqgHaHa&pid=Api'},
+        {'name': 'Crab', 'health': 10, 'attack': 5, 'experience': 15, 'image_url': 'https://tse4.mm.bing.net/th?id=OIP.B5HA2a9fykTmOLTr1zj46QHaGe&pid=Api'},
+        {'name': 'Legendary Plant', 'health': 300, 'attack': 15, 'experience': 100, 'image_url': 'https://tse4.mm.bing.net/th?id=OIP.m0iJrPgRAXPXuQUvx-CCvgHaHa&pid=Api'}
     ]
 
     # Game state
